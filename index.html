@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>話し合いふりかえりアンケート</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 16px;
+      color: #222;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      line-height: 1.7;
+    }
+
+    .question {
+      margin-top: 24px;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+
+    select, textarea, button {
+      width: 100%;
+      font-size: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      min-height: 100px;
+    }
+
+    button {
+      margin-top: 28px;
+      background: #1f6feb;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #999;
+    }
+
+    .message {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #0a7d32;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>話し合いふりかえりアンケート</h1>
+    <p>
+      自分自身の考えではなく、<strong>あなたが演じた役割の人の立場</strong>から回答してください。
+    </p>
+
+    <form id="surveyForm">
+      <div class="question">
+        <label>あなたが演じた役割</label>
+        <select name="role" required>
+          <option value="">選択してください</option>
+          <option value="Aさん">Aさん</option>
+          <option value="Bさん">Bさん</option>
+          <option value="Cさん">Cさん</option>
+          <option value="Dさん">Dさん</option>
+          <option value="Eさん">Eさん</option>
+          <option value="Fさん">Fさん</option>
+          <option value="Gさん">Gさん</option>
+        </select>
+      </div>
+
+      <div class="question">
+        <p><strong>① 自分が演じた役割の人は、話し合いのプロセスに納得できたと思いますか。</strong></p>
+        <label><input type="radio" name="processSatisfaction" value="とても納得できた" required> とても納得できた</label>
+        <label><input type="radio" name="processSatisfaction" value="ある程度納得できた"> ある程度納得できた</label>
+        <label><input type="radio" name="processSatisfaction" value="あまり納得できなかった"> あまり納得できなかった</label>
+        <label><input type="radio" name="processSatisfaction" value="まったく納得できなかった"> まったく納得できなかった</label>
+      </div>
+
+      <div class="question">
+        <p><strong>② 自分が演じた役割の人は、話し合いの結果に納得できたと思いますか。</strong></p>
+        <label><input type="radio" name="resultSatisfaction" value="とても納得できた" required> とても納得できた</label>
+        <label><input type="radio" name="resultSatisfaction" value="ある程度納得できた"> ある程度納得できた</label>
+        <label><input type="radio" name="resultSatisfaction" value="あまり納得できなかった"> あまり納得できなかった</label>
+        <label><input type="radio" name="resultSatisfaction" value="まったく納得できなかった"> まったく納得できなかった</label>
+      </div>
+
+      <div class="question">
+        <label><strong>そう考えた理由を簡単に書いてください。</strong></label>
+        <textarea name="reason" placeholder="例：自分の意見は聞いてもらえたが、最終的な結果には不満が残ったため。"></textarea>
+      </div>
+
+      <button type="submit">送信する</button>
+    </form>
+
+    <div class="message" id="message"></div>
+  </div>
+
+  <script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyObjx-_0Z_pts9KQOrw437okfa93j9oeeHhOhx2S2kXkR8GG8FB5j0Xf-nomzt4rPJjw/exec';
+
+    document.getElementById('surveyForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const form = e.target;
+      const button = form.querySelector('button');
+      const message = document.getElementById('message');
+
+      button.disabled = true;
+      button.textContent = '送信中...';
+
+      const formData = new FormData(form);
+
+      try {
+        await fetch(GAS_URL, {
+          method: 'POST',
+          body: formData,
+          mode: 'no-cors'
+        });
+
+        message.textContent = '送信しました。ご協力ありがとうございました。';
+        form.reset();
+      } catch (error) {
+        message.textContent = '送信に失敗しました。もう一度お試しください。';
+      }
+
+      button.disabled = false;
+      button.textContent = '送信する';
+    });
+  </script>
+</body>
+</html>

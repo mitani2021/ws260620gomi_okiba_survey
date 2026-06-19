@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アンケート結果</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 16px;
+      color: #222;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      font-size: 26px;
+    }
+
+    h2 {
+      margin-top: 36px;
+      font-size: 20px;
+    }
+
+    .chart-box {
+      margin-top: 16px;
+    }
+
+    canvas {
+      max-height: 360px;
+    }
+
+    .count {
+      margin-top: 12px;
+      font-weight: bold;
+    }
+
+    .comments {
+      margin-top: 24px;
+    }
+
+    .comment {
+      background: #f7f7f7;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .role {
+      font-weight: bold;
+      color: #1f6feb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>話し合いふりかえりアンケート 結果</h1>
+    <p>回答結果を自動集計して表示しています。</p>
+
+    <div class="count" id="count"></div>
+
+    <h2>① 話し合いのプロセスへの納得</h2>
+    <div class="chart-box">
+      <canvas id="processChart"></canvas>
+    </div>
+
+    <h2>② 話し合いの結果への納得</h2>
+    <div class="chart-box">
+      <canvas id="resultChart"></canvas>
+    </div>
+
+    <h2>役割別の回答数</h2>
+    <div class="chart-box">
+      <canvas id="roleChart"></canvas>
+    </div>
+
+    <h2>自由記述</h2>
+    <div class="comments" id="comments"></div>
+  </div>
+
+  <script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyObjx-_0Z_pts9KQOrw437okfa93j9oeeHhOhx2S2kXkR8GG8FB5j0Xf-nomzt4rPJjw/exec';
+
+    function loadData() {
+      const callbackName = 'callback_' + Date.now();
+
+      window[callbackName] = function(data) {
+        renderResults(data);
+        delete window[callbackName];
+      };
+
+      const script = document.createElement('script');
+      script.src = GAS_URL + '?callback=' + callbackName;
+      document.body.appendChild(script);
+    }
+
+    function countValues(data, key) {
+      const labels = [
+        'とても納得できた',
+        'ある程度納得できた',
+        'あまり納得できなかった',
+        'まったく納得できなかった'
+      ];
+
+      return labels.map(label => {
+        return data.filter(row => row[key] === label).length;
+      });
+    }
+
+    function countRoles(data) {
+      const roles = ['Aさん', 'Bさん', 'Cさん', 'Dさん', 'Eさん', 'Fさん', 'Gさん'];
+      return roles.map(role => {
+        return data.filter(row => row.role === role).length;
+      });
+    }
+
+    function createBarChart(canvasId, labels, values, title) {
+      new Chart(document.getElementById(canvasId), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: title,
+            data: values
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderResults(data) {
+      document.getElementById('count').textContent = `回答数：${data.length}件`;
+
+      const satisfactionLabels = [
+        'とても納得できた',
+        'ある程度納得できた',
+        'あまり納得できなかった',
+        'まったく納得できなかった'
+      ];
+
+      createBarChart(
+        'processChart',
+        satisfactionLabels,
+        countValues(data, 'processSatisfaction'),
+        'プロセスへの納得'
+      );
+
+      createBarChart(
+        'resultChart',
+        satisfactionLabels,
+        countValues(data, 'resultSatisfaction'),
+        '結果への納得'
+      );
+
+      createBarChart(
+        'roleChart',
+        ['Aさん', 'Bさん', 'Cさん', 'Dさん', 'Eさん', 'Fさん', 'Gさん'],
+        countRoles(data),
+        '役割別回答数'
+      );
+
+      const comments = document.getElementById('comments');
+      comments.innerHTML = '';
+
+      data.forEach(row => {
+        if (row.reason) {
+          const div = document.createElement('div');
+          div.className = 'comment';
+          div.innerHTML = `
+            <div class="role">${row.role || '役割未回答'}</div>
+            <div>${escapeHtml(row.reason)}</div>
+          `;
+          comments.appendChild(div);
+        }
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
